@@ -1,9 +1,9 @@
 package steamgiftsautomanager;
 
 public final class Giveaway {
-    private String title;
-    private String relativeUrl;
-    private int pointCost;
+    private final String title;
+    private final String relativeUrl;
+    private final int pointCost;
 
     Giveaway(String title, String relativeUrl, int pointCost) {
         this.title = title;

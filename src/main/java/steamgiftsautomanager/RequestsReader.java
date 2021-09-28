@@ -76,7 +76,7 @@ public class RequestsReader {
     private static boolean isValidCookie(String cookie) {
         if (!cookie.contains("=")) return false;
         String[] elements = cookie.split("=");
-        return elements.length == 2 && elements[1].length() == 48;
+        return elements.length == 2 && elements[0].length() != 0 && elements[1].length() == 48;
     }
 
     private static boolean isValidXsrfToken(String token) {
