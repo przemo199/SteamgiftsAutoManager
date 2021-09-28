@@ -1,0 +1,5 @@
+/.gradle
+/.idea
+/build
+requests.txt
+/settings.gradle

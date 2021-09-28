@@ -1,0 +1,40 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+version '1.0-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(15)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.0'
+    implementation 'org.jsoup:jsoup:1.14.2'
+}
+
+application {
+    mainClass = 'steamgiftsautomanager.SteamgiftsAutoManager'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'steamgiftsautomanager.SteamgiftsAutoManager'
+    }
+
+    from {
+        configurations.runtimeClasspath.filter { it.exists() }.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
