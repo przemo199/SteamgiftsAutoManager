@@ -20,13 +20,14 @@ enum Tag {
         this.tagString = tagString;
     }
 
-    public String getTagString() {
+    @Override
+    public String toString() {
         return tagString;
     }
 
     public static boolean contains(String string) {
         for (Tag tag : Tag.values()) {
-            if (tag.getTagString().equals(string)) {
+            if (tag.toString().equals(string)) {
                 return true;
             }
         }
@@ -58,11 +59,11 @@ public class RequestsReader {
 
         String content = requestsFileContent.getCookieName() + "=" + requestsFileContent.getCookieValue() + "\n" +
                 (requestsFileContent.getXsrfToken() + "\n" +
-                        Tag.EXACT_MATCH.getTagString() + "\n" +
+                        Tag.EXACT_MATCH.toString() + "\n" +
                         String.join("\n", requestsFileContent.getExactMatches()) + "\n" +
-                        Tag.ANY_MATCH.getTagString() + "\n" +
+                        Tag.ANY_MATCH.toString() + "\n" +
                         String.join("\n", requestsFileContent.getAnyMatches()) + "\n" +
-                        Tag.NO_MATCH.getTagString() + "\n" +
+                        Tag.NO_MATCH.toString() + "\n" +
                         String.join("\n", requestsFileContent.getNoMatches()) + "\n").toLowerCase();
 
         try {
@@ -70,6 +71,7 @@ public class RequestsReader {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         System.out.println("Requests file sorted in: " + Duration.between(start, Instant.now()).toMillis() + "ms");
     }
 
@@ -85,7 +87,9 @@ public class RequestsReader {
 
     private static String[] getTitlesByTag(Tag tag, List<String> lines) {
         List<String> tagMatches = new ArrayList<>();
-        int tagMatchIndex = lines.indexOf(tag.getTagString());
+        int tagMatchIndex = lines.indexOf(tag.toString());
+
+        if (tagMatchIndex == -1) return new String[0];
 
         for (int i = tagMatchIndex + 1; i < lines.size(); i++) {
             String line = lines.get(i);
