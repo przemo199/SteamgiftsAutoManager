@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.reflect.Method;
 
-public class RequestsReaderTest {
+class RequestsReaderTest {
     private static final Method isValidCookie = getPublicIsValidCookie();
 
     static Method getPublicIsValidCookie() {
