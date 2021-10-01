@@ -130,16 +130,26 @@ public class SteamgiftsHttpDriver {
 
     public void enterGiveaways(Giveaway[] giveaways) {
         List<String> linksToEnteredGiveaways = Arrays.asList(getLinksToEnteredGiveaways());
+        List<Giveaway> notEnteredGiveaways = new ArrayList<>();
         List<Giveaway> enteredGiveaways = new ArrayList<>();
+
+        System.out.println("Found " + linksToEnteredGiveaways.size() + " already entered giveaways");
 
         for (Giveaway giveaway : giveaways) {
             if (!linksToEnteredGiveaways.contains(giveaway.getRelativeUrl())) {
-                if(enterGiveaway(giveaway)) {
-                    enteredGiveaways.add(giveaway);
-                    System.out.println("Entered giveaway for: " + giveaway.getTitle());
-                } else {
-                    System.out.println("Failed to enter giveaway for: " + giveaway.getTitle());
-                }
+                notEnteredGiveaways.add(giveaway);
+            }
+        }
+
+        System.out.println("Found " + notEnteredGiveaways.size()
+                + " giveaways that match requested titles and are not entered");
+
+        for (Giveaway giveaway : notEnteredGiveaways) {
+            if (enterGiveaway(giveaway)) {
+                enteredGiveaways.add(giveaway);
+                System.out.println("Entered giveaway for: " + giveaway.getTitle());
+            } else {
+                System.out.println("Failed to enter giveaway for: " + giveaway.getTitle());
             }
         }
 

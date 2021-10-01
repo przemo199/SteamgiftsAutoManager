@@ -54,12 +54,8 @@ public class Utils {
     }
 
     public static Giveaway[] filterGiveaways(Giveaway[] giveaways, RequestsFileContent requestsFileContent) {
-        Giveaway[] filteredGiveaways = Arrays.stream(giveaways).filter(giveaway ->
+        return Arrays.stream(giveaways).filter(giveaway ->
                 Utils.customFilter(giveaway.getTitle(), requestsFileContent)).toArray(Giveaway[]::new);
-
-        System.out.println("Found " + filteredGiveaways.length + " giveaways matching requested game titles");
-
-        return filteredGiveaways;
     }
 
 }
