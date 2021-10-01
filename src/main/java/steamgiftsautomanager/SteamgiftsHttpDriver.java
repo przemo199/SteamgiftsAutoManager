@@ -114,20 +114,17 @@ public class SteamgiftsHttpDriver {
         return links.toArray(new String[0]);
     }
 
-    private void enterGiveaway(Giveaway giveaway) {
+    private boolean enterGiveaway(Giveaway giveaway) {
         try {
             Document document = Jsoup.connect(AJAX_URL).referrer(BASE_URL + giveaway.getRelativeUrl())
                     .cookie(requestsFileContent.getCookieName(), requestsFileContent.getCookieValue())
                     .requestBody("xsrf_token=" + requestsFileContent.getXsrfToken() + "&do=entry_insert&code=" +
                             giveaway.getGiveawayCode()).ignoreContentType(true).post();
 
-            if (document.text().contains("success")) {
-                System.out.println("Entered giveaway for: " + giveaway.getTitle());
-            } else {
-                System.out.println("Failed to enter giveaway for: " + giveaway.getTitle());
-            }
+            return document.text().contains("success");
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
     }
 
@@ -137,8 +134,12 @@ public class SteamgiftsHttpDriver {
 
         for (Giveaway giveaway : giveaways) {
             if (!linksToEnteredGiveaways.contains(giveaway.getRelativeUrl())) {
-                enterGiveaway(giveaway);
-                enteredGiveaways.add(giveaway);
+                if(enterGiveaway(giveaway)) {
+                    enteredGiveaways.add(giveaway);
+                    System.out.println("Entered giveaway for: " + giveaway.getTitle());
+                } else {
+                    System.out.println("Failed to enter giveaway for: " + giveaway.getTitle());
+                }
             }
         }
 
