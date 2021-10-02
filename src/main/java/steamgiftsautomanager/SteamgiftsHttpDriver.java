@@ -11,17 +11,19 @@ import java.util.HashMap;
 import java.util.List;
 
 public class SteamgiftsHttpDriver {
-    static final String BASE_URL = "https://www.steamgifts.com/";
-    static final String SEARCH_URL = BASE_URL + "giveaways/search?page=";
-    static final String AJAX_URL = BASE_URL + "ajax.php";
-    static final String ENTERED_GIVEAWAYS_SEARCH_URL = BASE_URL + "/giveaways/entered/search?page=";
+    private static final String BASE_URL = "https://www.steamgifts.com/";
+    private static final String SEARCH_URL = BASE_URL + "giveaways/search?page=";
+    private static final String AJAX_URL = BASE_URL + "ajax.php";
+    private static final String ENTERED_GIVEAWAYS_SEARCH_URL = BASE_URL + "/giveaways/entered/search?page=";
 
-    static final String INNER_GIVEAWAY_WRAP_CLASS = ".giveaway__row-inner-wrap";
-    static final String GIVEAWAY_HEADING_NAME_CLASS = ".giveaway__heading__name";
-    static final String GIVEAWAY_THUMBNAIL_CLASS = ".giveaway_image_thumbnail";
-    static final String GIVEAWAY_THUMBNAIL_MISSING_CLASS = ".giveaway_image_thumbnail_missing";
-    static final String GIVEAWAY_MISC_CLASS = ".giveaway__heading__thin";
-    static final String NAV_POINTS_CLASS = ".nav__points";
+    private static final String INNER_GIVEAWAY_WRAP_CLASS = ".giveaway__row-inner-wrap";
+    private static final String GIVEAWAY_HEADING_NAME_CLASS = ".giveaway__heading__name";
+    private static final String GIVEAWAY_THUMBNAIL_CLASS = ".giveaway_image_thumbnail";
+    private static final String GIVEAWAY_THUMBNAIL_MISSING_CLASS = ".giveaway_image_thumbnail_missing";
+    private static final String GIVEAWAY_MISC_CLASS = ".giveaway__heading__thin";
+    private static final String NAV_POINTS_CLASS = ".nav__points";
+
+    private static final String NOT_NUMBER_REGEX = "[^0-9]";
 
     private final RequestsFileContent requestsFileContent;
 
@@ -32,6 +34,7 @@ public class SteamgiftsHttpDriver {
 
     private boolean hasSession() {
         Document document = getDocumentFromUrl(BASE_URL);
+        if (document == null) return false;
         return !document.toString().contains("Sign in through STEAM");
     }
 
@@ -42,11 +45,14 @@ public class SteamgiftsHttpDriver {
         Document document;
         do {
             document = getDocumentFromUrl(SEARCH_URL + pageNumber);
+            if (document == null) break;
             Elements games = document.select(INNER_GIVEAWAY_WRAP_CLASS);
 
             for (Element element : games) {
                 Giveaway giveaway = getGiveawayFromElement(element);
-                giveaways.put(giveaway.getRelativeUrl(), giveaway);
+                if (giveaway != null) {
+                    giveaways.put(giveaway.getRelativeUrl(), giveaway);
+                }
             }
 
             System.out.print("\rScrapped " + pageNumber + " pages and found " + giveaways.size() + " giveaways");
@@ -60,7 +66,9 @@ public class SteamgiftsHttpDriver {
     }
 
     private Giveaway getGiveawayFromElement(Element element) {
-        String title = element.select(GIVEAWAY_HEADING_NAME_CLASS).first().text();
+        Element nameElement = element.select(GIVEAWAY_HEADING_NAME_CLASS).first();
+        if (nameElement == null) return null;
+        String title = nameElement.text();
 
         String relativeUrl;
         if (element.select(GIVEAWAY_THUMBNAIL_CLASS).hasAttr("href")) {
@@ -69,7 +77,11 @@ public class SteamgiftsHttpDriver {
             relativeUrl = element.select(GIVEAWAY_THUMBNAIL_MISSING_CLASS).attr("href");
         }
 
-        int pointCost = Integer.parseInt(element.select(GIVEAWAY_MISC_CLASS).last().text().replaceAll("[^0-9]", ""));
+        int pointCost = 0;
+        Element pointElement = element.select(GIVEAWAY_MISC_CLASS).last();
+        if (pointElement != null) {
+            pointCost = Integer.parseInt(pointElement.text().replaceAll(NOT_NUMBER_REGEX, ""));
+        }
 
         return new Giveaway(title, relativeUrl, pointCost);
     }
@@ -87,6 +99,7 @@ public class SteamgiftsHttpDriver {
 
     private int getRemainingPoints() {
         Document document = getDocumentFromUrl(BASE_URL);
+        if (document == null) return 0;
         return Integer.parseInt(document.select(NAV_POINTS_CLASS).text());
     }
 
@@ -97,18 +110,22 @@ public class SteamgiftsHttpDriver {
 
         do {
             Document document = getDocumentFromUrl(ENTERED_GIVEAWAYS_SEARCH_URL + pageNumber);
-            Elements elements = document.select(".table__row-inner-wrap");
+            if (document != null) {
+                Elements elements = document.select(".table__row-inner-wrap");
 
-            for (Element element : elements) {
-                if (!element.select(".table__column__secondary-link").isEmpty()) {
-                    links.add(element.select(".table_image_thumbnail").attr("href"));
-                } else {
-                    hasMore = false;
-                    break;
+                for (Element element : elements) {
+                    if (!element.select(".table__column__secondary-link").isEmpty()) {
+                        links.add(element.select(".table_image_thumbnail").attr("href"));
+                    } else {
+                        hasMore = false;
+                        break;
+                    }
                 }
-            }
 
-            pageNumber++;
+                pageNumber++;
+            } else {
+                hasMore = false;
+            }
         } while (hasMore);
 
         return links.toArray(new String[0]);

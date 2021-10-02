@@ -31,7 +31,6 @@ public class Utils {
                     return true;
                 }
             }
-
         } else {
             List<String> noMatchesList = Arrays.asList(requestsFileContent.getNoMatches());
             if (noMatchesList.contains(lowercaseTitle)) {
