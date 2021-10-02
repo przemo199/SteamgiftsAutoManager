@@ -9,7 +9,7 @@ public class SteamgiftsAutoManager {
         try {
             Instant start = Instant.now();
 
-            RequestsFileContent requestsFileContent = RequestsReader.readRequestsFileContent();
+            RequestsFileContent requestsFileContent = RequestsFileReader.readRequestsFileContent();
             SteamgiftsHttpDriver steamgiftsHttpDriver = new SteamgiftsHttpDriver(requestsFileContent);
             Giveaway[] giveaways = steamgiftsHttpDriver.scrapeAvailableGiveaways();
             Giveaway[] filteredGiveaways = Utils.filterGiveaways(giveaways, requestsFileContent);

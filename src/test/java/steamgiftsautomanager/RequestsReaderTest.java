@@ -15,7 +15,7 @@ class RequestsReaderTest {
 
     static Method getPublicIsValidCookie() {
         try {
-            Class<?> utils = RequestsReader.class;
+            Class<?> utils = RequestsFileReader.class;
             Method customFilter = utils.getDeclaredMethod("isValidCookie", String.class);
             customFilter.setAccessible(true);
             return customFilter;
@@ -27,7 +27,7 @@ class RequestsReaderTest {
 
     static Method getPublicGetTitlesByTag() {
         try {
-            Class<?> utils = RequestsReader.class;
+            Class<?> utils = RequestsFileReader.class;
             Method getTitlesByTag = utils.getDeclaredMethod("getTitlesByTag", Tag.class, List.class);
             getTitlesByTag.setAccessible(true);
             return getTitlesByTag;

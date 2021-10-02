@@ -21,7 +21,7 @@ gradlew build
 
 ## Usage
 
-To use this tool you need to correctly setup your requests.txt file.
+To use this tool you need to correctly set up your requests.txt file.
 
 The first two lines must contain ```cookie``` from your steamgifts.com session and corresponding ```xsrf_token```.
 

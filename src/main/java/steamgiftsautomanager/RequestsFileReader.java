@@ -36,10 +36,10 @@ enum Tag {
     }
 }
 
-public class RequestsReader {
+public class RequestsFileReader {
     private static final String REQUESTS_FILE = "./requests.txt";
 
-    private RequestsReader() {
+    private RequestsFileReader() {
     }
 
     private static String[] readRequestsFile() {
@@ -50,20 +50,20 @@ public class RequestsReader {
         }
     }
 
-    public static void sortRequestsFile() {
-        Instant start = Instant.now();
-        RequestsFileContent requestsFileContent = getRequestsFileContent();
+    private static void sortRequestedTitles(RequestsFileContent requestsFileContent) {
         Arrays.sort(requestsFileContent.getExactMatches());
         Arrays.sort(requestsFileContent.getAnyMatches());
         Arrays.sort(requestsFileContent.getNoMatches());
+    }
 
+    private static void writeRequestsFileContent(RequestsFileContent requestsFileContent) {
         String content = requestsFileContent.getCookieName() + "=" + requestsFileContent.getCookieValue() + "\n" +
                 (requestsFileContent.getXsrfToken() + "\n" +
-                        Tag.EXACT_MATCH.toString() + "\n" +
+                        Tag.EXACT_MATCH + "\n" +
                         String.join("\n", requestsFileContent.getExactMatches()) + "\n" +
-                        Tag.ANY_MATCH.toString() + "\n" +
+                        Tag.ANY_MATCH + "\n" +
                         String.join("\n", requestsFileContent.getAnyMatches()) + "\n" +
-                        Tag.NO_MATCH.toString() + "\n" +
+                        Tag.NO_MATCH + "\n" +
                         String.join("\n", requestsFileContent.getNoMatches()) + "\n").toLowerCase();
 
         try {
@@ -71,8 +71,6 @@ public class RequestsReader {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        System.out.println("Requests file sorted in: " + Duration.between(start, Instant.now()).toMillis() + "ms");
     }
 
     private static boolean isValidCookie(String cookie) {
@@ -119,7 +117,11 @@ public class RequestsReader {
     }
 
     public static RequestsFileContent readRequestsFileContent() {
-        sortRequestsFile();
-        return getRequestsFileContent();
+        Instant start = Instant.now();
+        RequestsFileContent requestsFileContent = getRequestsFileContent();
+        sortRequestedTitles(requestsFileContent);
+        writeRequestsFileContent(requestsFileContent);
+        System.out.println("Requests file sorted in: " + Duration.between(start, Instant.now()).toMillis() + "ms");
+        return requestsFileContent;
     }
 }
