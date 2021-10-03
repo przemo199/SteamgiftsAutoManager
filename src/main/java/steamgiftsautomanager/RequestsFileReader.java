@@ -37,15 +37,25 @@ enum Tag {
 }
 
 public class RequestsFileReader {
-    private static final String REQUESTS_FILE = "./requests.txt";
+    private static final String REQUESTS_FILE = "requests.txt";
 
     private RequestsFileReader() {
     }
 
     private static String[] readRequestsFile() {
-        try {
-            return Files.readAllLines(Paths.get(REQUESTS_FILE)).toArray(new String[0]);
-        } catch (IOException e) {
+        if (Files.exists(Paths.get(REQUESTS_FILE))) {
+            try {
+                return Files.readAllLines(Paths.get(REQUESTS_FILE)).toArray(new String[0]);
+            } catch (IOException e) {
+                throw new RuntimeException("Requests file not found");
+            }
+        } else if (Files.exists(Paths.get("./requests/" + REQUESTS_FILE))) {
+            try {
+                return Files.readAllLines(Paths.get("./requests/" + REQUESTS_FILE)).toArray(new String[0]);
+            } catch (IOException e) {
+                throw new RuntimeException("Requests file not found");
+            }
+        } else {
             throw new RuntimeException("Requests file not found");
         }
     }
@@ -66,10 +76,18 @@ public class RequestsFileReader {
                         Tag.NO_MATCH + "\n" +
                         String.join("\n", requestsFileContent.getNoMatches()) + "\n").toLowerCase();
 
-        try {
-            Files.writeString(Paths.get(REQUESTS_FILE), content);
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (Files.exists(Paths.get(REQUESTS_FILE))) {
+            try {
+                Files.writeString(Paths.get(REQUESTS_FILE), content);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else if (Files.exists(Paths.get("./requests/" + REQUESTS_FILE))) {
+            try {
+                Files.writeString(Paths.get("./requests/" + REQUESTS_FILE), content);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 

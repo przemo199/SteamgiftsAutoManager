@@ -25,6 +25,8 @@ public class SteamgiftsHttpDriver {
 
     private static final String NOT_NUMBER_REGEX = "[^0-9]";
 
+    private static final String[] SUCCESS_KEYWORDS = new String[]{"success", "entry_count", "points"};
+
     private final RequestsFileContent requestsFileContent;
 
     public SteamgiftsHttpDriver(RequestsFileContent requestsFileContent) {
@@ -117,8 +119,10 @@ public class SteamgiftsHttpDriver {
                     if (!element.select(".table__column__secondary-link").isEmpty()) {
                         links.add(element.select(".table_image_thumbnail").attr("href"));
                     } else {
-                        hasMore = false;
-                        break;
+                        if (element == elements.last()) {
+                            hasMore = false;
+                            break;
+                        }
                     }
                 }
 
@@ -137,8 +141,15 @@ public class SteamgiftsHttpDriver {
                     .cookie(requestsFileContent.getCookieName(), requestsFileContent.getCookieValue())
                     .requestBody("xsrf_token=" + requestsFileContent.getXsrfToken() + "&do=entry_insert&code=" +
                             giveaway.getGiveawayCode()).ignoreContentType(true).post();
+            String response = document.text();
 
-            return document.text().contains("success");
+            for (String element : SUCCESS_KEYWORDS) {
+                if (!response.contains(element)) {
+                    return false;
+                }
+            }
+
+            return true;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
