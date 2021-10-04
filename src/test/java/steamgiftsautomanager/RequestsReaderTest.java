@@ -11,7 +11,7 @@ import java.util.List;
 
 class RequestsReaderTest {
     private static final Method isValidCookie = getPublicIsValidCookie();
-    private static final Method getTitlesByTag = getPublicGetTitlesByTag();
+    private static final Method getSortedAndUniqueTitlesByTag = getPublicGetSortedAndUniqueTitlesByTag();
 
     static Method getPublicIsValidCookie() {
         try {
@@ -25,10 +25,10 @@ class RequestsReaderTest {
         }
     }
 
-    static Method getPublicGetTitlesByTag() {
+    static Method getPublicGetSortedAndUniqueTitlesByTag() {
         try {
             Class<?> utils = RequestsFileReader.class;
-            Method getTitlesByTag = utils.getDeclaredMethod("getTitlesByTag", Tag.class, List.class);
+            Method getTitlesByTag = utils.getDeclaredMethod("getSortedAndUniqueTitlesByTag", Tag.class, List.class);
             getTitlesByTag.setAccessible(true);
             return getTitlesByTag;
         } catch (Exception e) {
@@ -75,9 +75,9 @@ class RequestsReaderTest {
         List<String> contentList = Arrays.asList(content);
 
         try {
-            assertArrayEquals((String[])getTitlesByTag.invoke(null, Tag.EXACT_MATCH, contentList), new String[]{exactMatchTest});
-            assertArrayEquals((String[])getTitlesByTag.invoke(null, Tag.ANY_MATCH, contentList), new String[]{anyMatchTest});
-            assertArrayEquals((String[])getTitlesByTag.invoke(null, Tag.NO_MATCH, contentList), new String[]{noMatchTest});
+            assertArrayEquals((String[]) getSortedAndUniqueTitlesByTag.invoke(null, Tag.EXACT_MATCH, contentList), new String[]{exactMatchTest});
+            assertArrayEquals((String[]) getSortedAndUniqueTitlesByTag.invoke(null, Tag.ANY_MATCH, contentList), new String[]{anyMatchTest});
+            assertArrayEquals((String[]) getSortedAndUniqueTitlesByTag.invoke(null, Tag.NO_MATCH, contentList), new String[]{noMatchTest});
         } catch (Exception e) {
             e.printStackTrace();
             fail();

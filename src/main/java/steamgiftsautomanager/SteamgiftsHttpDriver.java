@@ -22,6 +22,9 @@ public class SteamgiftsHttpDriver {
     private static final String GIVEAWAY_THUMBNAIL_MISSING_CLASS = ".giveaway_image_thumbnail_missing";
     private static final String GIVEAWAY_MISC_CLASS = ".giveaway__heading__thin";
     private static final String NAV_POINTS_CLASS = ".nav__points";
+    private static final String TABLE_ROW_INNER_WRAP_CLASS = ".table__row-inner-wrap";
+    private static final String TABLE_COLUMN_SECONDARY_LINK_CLASS = ".table__column__secondary-link";
+    private static final String TABLE_IMAGE_THUMBNAIL_CLASS = ".table_image_thumbnail";
 
     private static final String NOT_NUMBER_REGEX = "[^0-9]";
 
@@ -113,11 +116,11 @@ public class SteamgiftsHttpDriver {
         do {
             Document document = getDocumentFromUrl(ENTERED_GIVEAWAYS_SEARCH_URL + pageNumber);
             if (document != null) {
-                Elements elements = document.select(".table__row-inner-wrap");
+                Elements elements = document.select(TABLE_ROW_INNER_WRAP_CLASS);
 
                 for (Element element : elements) {
-                    if (!element.select(".table__column__secondary-link").isEmpty()) {
-                        links.add(element.select(".table_image_thumbnail").attr("href"));
+                    if (!element.select(TABLE_COLUMN_SECONDARY_LINK_CLASS).isEmpty()) {
+                        links.add(element.select(TABLE_IMAGE_THUMBNAIL_CLASS).attr("href"));
                     } else {
                         if (element == elements.last()) {
                             hasMore = false;
@@ -161,7 +164,7 @@ public class SteamgiftsHttpDriver {
         List<Giveaway> notEnteredGiveaways = new ArrayList<>();
         List<Giveaway> enteredGiveaways = new ArrayList<>();
 
-        System.out.println("Found " + linksToEnteredGiveaways.size() + " already entered giveaways");
+        System.out.println("Found " + linksToEnteredGiveaways.size() + " already entered giveaway(s)");
 
         for (Giveaway giveaway : giveaways) {
             if (!linksToEnteredGiveaways.contains(giveaway.getRelativeUrl())) {
@@ -170,7 +173,7 @@ public class SteamgiftsHttpDriver {
         }
 
         System.out.println("Found " + notEnteredGiveaways.size()
-                + " giveaways that match requested titles and are not entered");
+                + " giveaway(s) that match requested titles and are not entered");
 
         for (Giveaway giveaway : notEnteredGiveaways) {
             if (enterGiveaway(giveaway)) {
@@ -186,8 +189,8 @@ public class SteamgiftsHttpDriver {
             pointsSpent += giveaway.getPointCost();
         }
 
-        System.out.println("Entered " + enteredGiveaways.size() + " giveaways, spent " + pointsSpent +
-                " points, " + getRemainingPoints() + " points remaining");
+        System.out.println("Entered " + enteredGiveaways.size() + " giveaway(s), spent " + pointsSpent +
+                " point(s), " + getRemainingPoints() + " points remaining");
     }
 
 }

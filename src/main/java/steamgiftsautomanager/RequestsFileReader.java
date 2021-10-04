@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.TreeSet;
 
 enum Tag {
     EXACT_MATCH("[exact_match]"),
@@ -47,23 +48,17 @@ public class RequestsFileReader {
             try {
                 return Files.readAllLines(Paths.get(REQUESTS_FILE)).toArray(new String[0]);
             } catch (IOException e) {
-                throw new RuntimeException("Requests file not found");
+                throw new RuntimeException("Error when reading requests file");
             }
         } else if (Files.exists(Paths.get("./requests/" + REQUESTS_FILE))) {
             try {
                 return Files.readAllLines(Paths.get("./requests/" + REQUESTS_FILE)).toArray(new String[0]);
             } catch (IOException e) {
-                throw new RuntimeException("Requests file not found");
+                throw new RuntimeException("Error when reading requests file");
             }
         } else {
             throw new RuntimeException("Requests file not found");
         }
-    }
-
-    private static void sortRequestedTitles(RequestsFileContent requestsFileContent) {
-        Arrays.sort(requestsFileContent.getExactMatches());
-        Arrays.sort(requestsFileContent.getAnyMatches());
-        Arrays.sort(requestsFileContent.getNoMatches());
     }
 
     private static void writeRequestsFileContent(RequestsFileContent requestsFileContent) {
@@ -101,7 +96,7 @@ public class RequestsFileReader {
         return token.length() == 32;
     }
 
-    private static String[] getTitlesByTag(Tag tag, List<String> lines) {
+    private static String[] getSortedAndUniqueTitlesByTag(Tag tag, List<String> lines) {
         List<String> tagMatches = new ArrayList<>();
         int tagMatchIndex = lines.indexOf(tag.toString());
 
@@ -116,7 +111,9 @@ public class RequestsFileReader {
             }
         }
 
-        return tagMatches.toArray(new String[0]);
+        String[] result = (new TreeSet<>(tagMatches)).toArray(new String[0]);
+        Arrays.sort(result);
+        return result;
     }
 
     private static RequestsFileContent getRequestsFileContent() {
@@ -128,16 +125,15 @@ public class RequestsFileReader {
         String[] cookieElements = lines.get(0).split("=");
 
         return new RequestsFileContent(cookieElements[0], cookieElements[1], lines.get(1),
-                getTitlesByTag(Tag.EXACT_MATCH, lines),
-                getTitlesByTag(Tag.ANY_MATCH, lines),
-                getTitlesByTag(Tag.NO_MATCH, lines)
+                getSortedAndUniqueTitlesByTag(Tag.EXACT_MATCH, lines),
+                getSortedAndUniqueTitlesByTag(Tag.ANY_MATCH, lines),
+                getSortedAndUniqueTitlesByTag(Tag.NO_MATCH, lines)
         );
     }
 
     public static RequestsFileContent readRequestsFileContent() {
         Instant start = Instant.now();
         RequestsFileContent requestsFileContent = getRequestsFileContent();
-        sortRequestedTitles(requestsFileContent);
         writeRequestsFileContent(requestsFileContent);
         System.out.println("Requests file sorted in: " + Duration.between(start, Instant.now()).toMillis() + "ms");
         return requestsFileContent;
