@@ -3,6 +3,8 @@
 ![tests](https://github.com/przemo199/SteamgiftsAutoManagerHttp/actions/workflows/test.yml/badge.svg)
 ![Docker Image Size (latest by date)](https://img.shields.io/docker/image-size/przemo199/steamgifts-auto-manager-http)
 
+[DockerHub repository](https://hub.docker.com/repository/docker/przemo199/steamgifts-auto-manager-http)
+
 SteamgiftsAutoManagerHttp is a Java CLI tool designed to automatically scrape and enter giveaways on [steamgifts.com](https://www.steamgifts.com/).  
 It is a variation of similar tool called [steamgifts-auto-manager](https://github.com/przemo199/steamgifts-auto-manager) but uses only HTTP requests instead of controlling an instance of Chrome to reduce resource usage and deliver better performance.
 
@@ -34,4 +36,9 @@ To start the tool use:
 
 ```bash
 gradlew run
+```
+or build or download the docker image from DockerHub and use:
+
+```bash
+docker run -d -p <host_port>:8000 -v <host_folder_with_requests_file>:/app/requests steamgifts-auto-manager-http
 ```
