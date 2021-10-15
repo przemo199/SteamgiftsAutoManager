@@ -46,8 +46,8 @@ public class SteamgiftsHttpDriver {
     public Giveaway[] scrapeAvailableGiveaways() {
         HashMap<String, Giveaway> giveaways = new HashMap<>();
         int pageNumber = 1;
-
         Document document;
+
         do {
             document = getDocumentFromUrl(SEARCH_URL + pageNumber);
             if (document == null) break;
@@ -60,7 +60,7 @@ public class SteamgiftsHttpDriver {
                 }
             }
 
-            System.out.print("\rScrapped " + pageNumber + " pages and found " + giveaways.size() + " giveaways");
+            Utils.printScrappedGiveaways(pageNumber, giveaways.size());
 
             pageNumber++;
         } while (!document.toString().contains("No results were found."));
@@ -93,12 +93,14 @@ public class SteamgiftsHttpDriver {
 
     private Document getDocumentFromUrl(String url) {
         Document document = null;
+
         try {
             document = Jsoup.connect(url).cookie(requestsFileContent.getCookieName(),
                     requestsFileContent.getCookieValue()).get();
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         return document;
     }
 
@@ -140,10 +142,13 @@ public class SteamgiftsHttpDriver {
 
     private boolean enterGiveaway(Giveaway giveaway) {
         try {
+            String body = "xsrf_token=" + requestsFileContent.getXsrfToken() + "&do=entry_insert&code=" +
+                    giveaway.getGiveawayCode();
+
             Document document = Jsoup.connect(AJAX_URL).referrer(BASE_URL + giveaway.getRelativeUrl())
                     .cookie(requestsFileContent.getCookieName(), requestsFileContent.getCookieValue())
-                    .requestBody("xsrf_token=" + requestsFileContent.getXsrfToken() + "&do=entry_insert&code=" +
-                            giveaway.getGiveawayCode()).ignoreContentType(true).post();
+                    .requestBody(body).ignoreContentType(true).post();
+
             String response = document.text();
 
             for (String element : SUCCESS_KEYWORDS) {
@@ -164,7 +169,7 @@ public class SteamgiftsHttpDriver {
         List<Giveaway> notEnteredGiveaways = new ArrayList<>();
         List<Giveaway> enteredGiveaways = new ArrayList<>();
 
-        System.out.println("Found " + linksToEnteredGiveaways.size() + " already entered giveaway(s)");
+        Utils.printFoundEnteredGiveaways(linksToEnteredGiveaways.size());
 
         for (Giveaway giveaway : giveaways) {
             if (!linksToEnteredGiveaways.contains(giveaway.getRelativeUrl())) {
@@ -172,15 +177,14 @@ public class SteamgiftsHttpDriver {
             }
         }
 
-        System.out.println("Found " + notEnteredGiveaways.size()
-                + " giveaway(s) that match requested titles and are not entered");
+        Utils.printFoundGiveaways(notEnteredGiveaways.size());
 
         for (Giveaway giveaway : notEnteredGiveaways) {
             if (enterGiveaway(giveaway)) {
                 enteredGiveaways.add(giveaway);
-                System.out.println("Entered giveaway for: " + giveaway.getTitle());
+                Utils.printEnteredGiveaway(giveaway.getTitle());
             } else {
-                System.out.println("Failed to enter giveaway for: " + giveaway.getTitle());
+                Utils.printFailedToEnterGiveaway(giveaway.getTitle());
             }
         }
 
@@ -189,8 +193,7 @@ public class SteamgiftsHttpDriver {
             pointsSpent += giveaway.getPointCost();
         }
 
-        System.out.println("Entered " + enteredGiveaways.size() + " giveaway(s), spent " + pointsSpent +
-                " point(s), " + getRemainingPoints() + " points remaining");
+        Utils.printFinalSummary(enteredGiveaways.size(), pointsSpent, getRemainingPoints());
     }
 
 }

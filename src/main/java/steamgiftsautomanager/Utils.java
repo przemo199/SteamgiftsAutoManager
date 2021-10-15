@@ -57,4 +57,29 @@ public class Utils {
                 Utils.customFilter(giveaway.getTitle(), requestsFileContent)).toArray(Giveaway[]::new);
     }
 
+    public static void printFoundGiveaways(int giveawaysCount) {
+        System.out.println("Found " + giveawaysCount + " giveaway(s) that match requested titles and are not entered");
+    }
+
+    public static void printFoundEnteredGiveaways(int giveawaysCount) {
+        System.out.println("Found " + giveawaysCount + " already entered giveaway(s)");
+    }
+
+    public static void printEnteredGiveaway(String giveawayTitle) {
+        System.out.println("Entered giveaway for: " + giveawayTitle);
+    }
+
+    public static void printFailedToEnterGiveaway(String giveawayTitle) {
+        System.out.println("Failed to enter giveaway for: " + giveawayTitle);
+    }
+
+    public static void printScrappedGiveaways(int pageNumber, int giveawaysCount) {
+        System.out.print("\rScrapped " + pageNumber + " pages and found " + giveawaysCount + " giveaways");
+    }
+
+    public static void printFinalSummary(int giveawaysCount, int pointsSpent, int remainingPoints) {
+        System.out.println("Entered " + giveawaysCount + " giveaway(s), spent " + pointsSpent +
+                " point(s), " + remainingPoints + " points remaining");
+    }
+
 }
