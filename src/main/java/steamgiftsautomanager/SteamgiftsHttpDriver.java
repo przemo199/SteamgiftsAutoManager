@@ -32,15 +32,15 @@ public class SteamgiftsHttpDriver {
 
     private final RequestsFileContent requestsFileContent;
 
-    public SteamgiftsHttpDriver(RequestsFileContent requestsFileContent) {
-        this.requestsFileContent = requestsFileContent;
-        if (!hasSession()) throw new RuntimeException("No session associated with the provided cookie found");
-    }
-
-    private boolean hasSession() {
+    private boolean hasNoSession() {
         Document document = getDocumentFromUrl(BASE_URL);
         if (document == null) return false;
-        return !document.toString().contains("Sign in through STEAM");
+        return document.toString().contains("Sign in through STEAM");
+    }
+
+    public SteamgiftsHttpDriver(RequestsFileContent requestsFileContent) {
+        this.requestsFileContent = requestsFileContent;
+        if (hasNoSession()) throw new RuntimeException("No session associated with the provided cookie found");
     }
 
     public Giveaway[] scrapeAvailableGiveaways() {
