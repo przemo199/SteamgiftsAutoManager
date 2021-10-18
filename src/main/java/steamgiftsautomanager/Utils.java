@@ -57,12 +57,15 @@ public class Utils {
                 Utils.customFilter(giveaway.getTitle(), requestsFileContent)).toArray(Giveaway[]::new);
     }
 
-    public static void printFoundGiveaways(int giveawaysCount) {
-        System.out.println("Found " + giveawaysCount + " giveaway(s) that match requested titles and are not entered");
+    public static void printFoundGiveaways(int giveawayCount) {
+        boolean isOne = giveawayCount == 1;
+        System.out.println("Found " + giveawayCount + " not entered " + (isOne ? "giveaway" : "giveaways") +
+                " that " + (isOne ? "matches" : "match") + " requested titles");
     }
 
-    public static void printFoundEnteredGiveaways(int giveawaysCount) {
-        System.out.println("Found " + giveawaysCount + " already entered giveaway(s)");
+    public static void printFoundEnteredGiveaways(int giveawayCount) {
+        System.out.println("Found " + giveawayCount + " already entered " +
+                (giveawayCount == 1 ? "giveaway" : "giveaways"));
     }
 
     public static void printEnteredGiveaway(String giveawayTitle) {
@@ -73,13 +76,15 @@ public class Utils {
         System.out.println("Failed to enter giveaway for: " + giveawayTitle);
     }
 
-    public static void printScrappedGiveaways(int pageNumber, int giveawaysCount) {
-        System.out.print("\rScrapped " + pageNumber + " pages and found " + giveawaysCount + " giveaways");
+    public static void printScrappedGiveaways(int pageNumber, int giveawayCount) {
+        System.out.print("\rScrapped " + pageNumber + (pageNumber == 1 ? " page" : " pages") + " and found " +
+                giveawayCount + (giveawayCount == 1 ? " giveaway" : " giveaways"));
     }
 
-    public static void printFinalSummary(int giveawaysCount, int pointsSpent, int remainingPoints) {
-        System.out.println("Entered " + giveawaysCount + " giveaway(s), spent " + pointsSpent +
-                " point(s), " + remainingPoints + " points remaining");
+    public static void printFinalSummary(int giveawayCount, int pointsSpent, int remainingPoints) {
+        System.out.println("Entered " + giveawayCount + (giveawayCount == 1 ? " giveaway" : " giveaways") +", spent " +
+                pointsSpent + (pointsSpent == 1 ? " point" : " points") + ", " +
+                remainingPoints + (remainingPoints == 1 ? " point" : " points") + " remaining");
     }
 
 }
