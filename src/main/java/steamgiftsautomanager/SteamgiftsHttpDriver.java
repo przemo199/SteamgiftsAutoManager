@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 public class SteamgiftsHttpDriver {
     private static final String BASE_URL = "https://www.steamgifts.com/";
@@ -28,7 +30,7 @@ public class SteamgiftsHttpDriver {
 
     private static final String NOT_NUMBER_REGEX = "[^0-9]";
 
-    private static final String[] SUCCESS_KEYWORDS = new String[]{"success", "entry_count", "points"};
+    private static final String[] SUCCESS_KEYWORDS = {"success", "entry_count", "points"};
 
     private final RequestsFileContent requestsFileContent;
 
@@ -167,7 +169,6 @@ public class SteamgiftsHttpDriver {
     public void enterGiveaways(Giveaway[] giveaways) {
         List<String> linksToEnteredGiveaways = Arrays.asList(getLinksToEnteredGiveaways());
         List<Giveaway> notEnteredGiveaways = new ArrayList<>();
-        List<Giveaway> enteredGiveaways = new ArrayList<>();
 
         Utils.printFoundEnteredGiveaways(linksToEnteredGiveaways.size());
 
@@ -179,21 +180,34 @@ public class SteamgiftsHttpDriver {
 
         Utils.printFoundGiveaways(notEnteredGiveaways.size());
 
+        List<CompletableFuture<Giveaway>> futures = new ArrayList<>();
         for (Giveaway giveaway : notEnteredGiveaways) {
-            if (enterGiveaway(giveaway)) {
-                enteredGiveaways.add(giveaway);
-                Utils.printEnteredGiveaway(giveaway.getTitle());
-            } else {
-                Utils.printFailedToEnterGiveaway(giveaway.getTitle());
-            }
+            futures.add(CompletableFuture.supplyAsync(() -> {
+                if (enterGiveaway(giveaway)) {
+                    Utils.printEnteredGiveaway(giveaway.getTitle());
+                    return giveaway;
+                } else {
+                    Utils.printFailedToEnterGiveaway(giveaway.getTitle());
+                    return null;
+                }
+            }));
         }
 
         int pointsSpent = 0;
-        for (Giveaway giveaway : enteredGiveaways) {
-            pointsSpent += giveaway.getPointCost();
+        int enteredGiveaways = 0;
+        try{
+            for (CompletableFuture<Giveaway> c : futures) {
+                Giveaway giveaway = c.get();
+                if (giveaway != null) {
+                    pointsSpent += giveaway.getPointCost();
+                    enteredGiveaways++;
+                }
+            }
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+            Thread.currentThread().interrupt();
         }
 
-        Utils.printFinalSummary(enteredGiveaways.size(), pointsSpent, getRemainingPoints());
+        Utils.printFinalSummary(enteredGiveaways, pointsSpent, getRemainingPoints());
     }
-
 }
