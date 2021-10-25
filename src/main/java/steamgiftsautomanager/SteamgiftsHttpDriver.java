@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class SteamgiftsHttpDriver {
     private static final String BASE_URL = "https://www.steamgifts.com/";
@@ -180,6 +182,7 @@ public class SteamgiftsHttpDriver {
 
         Utils.printFoundGiveaways(notEnteredGiveaways.size());
 
+        ExecutorService threadPool = Executors.newFixedThreadPool(10);
         List<CompletableFuture<Giveaway>> futures = new ArrayList<>();
         for (Giveaway giveaway : notEnteredGiveaways) {
             futures.add(CompletableFuture.supplyAsync(() -> {
@@ -190,7 +193,7 @@ public class SteamgiftsHttpDriver {
                     Utils.printFailedToEnterGiveaway(giveaway.getTitle());
                     return null;
                 }
-            }));
+            }, threadPool));
         }
 
         int pointsSpent = 0;
