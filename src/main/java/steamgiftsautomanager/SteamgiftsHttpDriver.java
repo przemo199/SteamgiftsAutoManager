@@ -212,5 +212,7 @@ public class SteamgiftsHttpDriver {
         }
 
         Utils.printFinalSummary(enteredGiveaways, pointsSpent, getRemainingPoints());
+
+        threadPool.shutdownNow();
     }
 }
