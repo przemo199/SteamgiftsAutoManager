@@ -182,7 +182,7 @@ public class SteamgiftsHttpDriver {
 
         Utils.printFoundGiveaways(notEnteredGiveaways.size());
 
-        ExecutorService threadPool = Executors.newFixedThreadPool(10);
+        ExecutorService threadPool = Executors.newCachedThreadPool();
         List<CompletableFuture<Giveaway>> futures = new ArrayList<>();
         for (Giveaway giveaway : notEnteredGiveaways) {
             futures.add(CompletableFuture.supplyAsync(() -> {
@@ -199,8 +199,8 @@ public class SteamgiftsHttpDriver {
         int pointsSpent = 0;
         int enteredGiveaways = 0;
         try{
-            for (CompletableFuture<Giveaway> c : futures) {
-                Giveaway giveaway = c.get();
+            for (CompletableFuture<Giveaway> future : futures) {
+                Giveaway giveaway = future.get();
                 if (giveaway != null) {
                     pointsSpent += giveaway.getPointCost();
                     enteredGiveaways++;

@@ -1,6 +1,9 @@
-FROM openjdk:15-alpine
+FROM openjdk:15-alpine AS build
 WORKDIR /app
 COPY . .
-EXPOSE 8000
 RUN ["./gradlew", "build"]
-ENTRYPOINT ["java", "-jar", "./build/libs/steamgifts-auto-manager-http.jar"]
+
+FROM openjdk:15-alpine
+EXPOSE 8000
+COPY --from=build /app/build/libs/*.jar /app/steamgifts-auto-manager-http.jar
+ENTRYPOINT ["java", "-jar", "/app/steamgifts-auto-manager-http.jar"]
