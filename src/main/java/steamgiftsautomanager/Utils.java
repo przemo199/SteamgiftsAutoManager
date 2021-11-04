@@ -59,8 +59,8 @@ public class Utils {
 
     public static void printFoundGiveaways(int giveawayCount) {
         boolean isOne = giveawayCount == 1;
-        System.out.println("Found " + giveawayCount + " not entered " + (isOne ? "giveaway" : "giveaways") +
-                " that " + (isOne ? "matches" : "match") + " requested titles");
+        System.out.println("Found " + giveawayCount + " candidate " + (isOne ? "giveaway" : "giveaways") +
+                " to enter");
     }
 
     public static void printFoundEnteredGiveaways(int giveawayCount) {
