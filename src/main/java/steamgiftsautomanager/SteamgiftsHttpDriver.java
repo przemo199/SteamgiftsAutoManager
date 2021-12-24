@@ -13,13 +13,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class SteamgiftsHttpDriver {
     private static final String BASE_URL = "https://www.steamgifts.com/";
     private static final String SEARCH_URL = BASE_URL + "giveaways/search?page=";
     private static final String AJAX_URL = BASE_URL + "ajax.php";
     private static final String ENTERED_GIVEAWAYS_SEARCH_URL = BASE_URL + "/giveaways/entered/search?page=";
-
     private static final String INNER_GIVEAWAY_WRAP_CLASS = ".giveaway__row-inner-wrap";
     private static final String GIVEAWAY_HEADING_NAME_CLASS = ".giveaway__heading__name";
     private static final String GIVEAWAY_THUMBNAIL_CLASS = ".giveaway_image_thumbnail";
@@ -29,11 +29,8 @@ public class SteamgiftsHttpDriver {
     private static final String TABLE_ROW_INNER_WRAP_CLASS = ".table__row-inner-wrap";
     private static final String TABLE_COLUMN_SECONDARY_LINK_CLASS = ".table__column__secondary-link";
     private static final String TABLE_IMAGE_THUMBNAIL_CLASS = ".table_image_thumbnail";
-
     private static final String NOT_NUMBER_REGEX = "[^0-9]";
-
     private static final String[] SUCCESS_KEYWORDS = {"success", "entry_count", "points"};
-
     private final RequestsFileContent requestsFileContent;
 
     private boolean hasNoSession() {
@@ -50,24 +47,58 @@ public class SteamgiftsHttpDriver {
     public Giveaway[] scrapeAvailableGiveaways() {
         HashMap<String, Giveaway> giveaways = new HashMap<>();
         int pageNumber = 1;
-        Document document;
+        AtomicInteger scrappedPages = new AtomicInteger(0);
+        boolean hasMorePages = true;
+        int requestBatch = 10;
+        long startTime = System.currentTimeMillis();
 
+        ExecutorService threadPool = Executors.newCachedThreadPool();
+        List<CompletableFuture<Giveaway[]>> futures = new ArrayList<>();
         do {
-            document = getDocumentFromUrl(SEARCH_URL + pageNumber);
-            if (document == null) break;
-            Elements games = document.select(INNER_GIVEAWAY_WRAP_CLASS);
+            for (int i = 0; i < requestBatch; i++) {
+                int page = pageNumber;
+                futures.add(CompletableFuture.supplyAsync(() -> {
+                    Document document = getDocumentFromUrl(SEARCH_URL + page);
 
-            for (Element element : games) {
-                Giveaway giveaway = getGiveawayFromElement(element);
-                if (giveaway != null) {
-                    giveaways.put(giveaway.getRelativeUrl(), giveaway);
+                    if (document == null || document.toString().contains("No results were found.")) {
+                        return null;
+                    }
+
+                    Elements gameElements = document.select(INNER_GIVEAWAY_WRAP_CLASS);
+                    ArrayList<Giveaway> giveawayList = new ArrayList<>();
+                    for (Element element : gameElements) {
+                        Giveaway giveaway = getGiveawayFromElement(element);
+                        if (giveaway != null) {
+                            giveawayList.add(giveaway);
+                        }
+                    }
+
+                    scrappedPages.getAndIncrement();
+
+                    return giveawayList.toArray(new Giveaway[0]);
+                }, threadPool));
+                pageNumber++;
+            }
+
+            for (CompletableFuture<Giveaway[]> future : futures) {
+                try {
+                    Giveaway[] giveawayList = future.get();
+                    if (giveawayList == null) {
+                        hasMorePages = false;
+                    } else {
+                        for (Giveaway giveaway : giveawayList) {
+                            giveaways.put(giveaway.getRelativeUrl(), giveaway);
+                        }
+                    }
+                } catch (ExecutionException | InterruptedException e) {
+                    e.printStackTrace();
+                    Thread.currentThread().interrupt();
                 }
             }
 
-            Utils.printScrappedGiveaways(pageNumber, giveaways.size());
-
-            pageNumber++;
-        } while (!document.toString().contains("No results were found."));
+            Utils.printScrappedGiveaways(scrappedPages.get(), giveaways.size(), System.currentTimeMillis() - startTime);
+        } while (hasMorePages);
+        threadPool.shutdownNow();
 
         System.out.println();
 
@@ -101,8 +132,8 @@ public class SteamgiftsHttpDriver {
         try {
             document = Jsoup.connect(url).cookie(requestsFileContent.getCookieName(),
                     requestsFileContent.getCookieValue()).get();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception exception) {
+            exception.printStackTrace();
         }
 
         return document;
@@ -180,7 +211,7 @@ public class SteamgiftsHttpDriver {
             }
         }
 
-        Utils.printFoundGiveaways(notEnteredGiveaways.size());
+        Utils.printFoundGiveawayCandidates(notEnteredGiveaways.size());
 
         ExecutorService threadPool = Executors.newCachedThreadPool();
         List<CompletableFuture<Giveaway>> futures = new ArrayList<>();
@@ -198,17 +229,17 @@ public class SteamgiftsHttpDriver {
 
         int pointsSpent = 0;
         int enteredGiveaways = 0;
-        try{
-            for (CompletableFuture<Giveaway> future : futures) {
+        for (CompletableFuture<Giveaway> future : futures) {
+            try {
                 Giveaway giveaway = future.get();
                 if (giveaway != null) {
                     pointsSpent += giveaway.getPointCost();
                     enteredGiveaways++;
                 }
+            } catch (ExecutionException | InterruptedException exception) {
+                exception.printStackTrace();
+                Thread.currentThread().interrupt();
             }
-        } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-            Thread.currentThread().interrupt();
         }
 
         Utils.printFinalSummary(enteredGiveaways, pointsSpent, getRemainingPoints());

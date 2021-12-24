@@ -57,7 +57,7 @@ public class Utils {
                 Utils.customFilter(giveaway.getTitle(), requestsFileContent)).toArray(Giveaway[]::new);
     }
 
-    public static void printFoundGiveaways(int giveawayCount) {
+    public static void printFoundGiveawayCandidates(int giveawayCount) {
         boolean isOne = giveawayCount == 1;
         System.out.println("Found " + giveawayCount + " candidate " + (isOne ? "giveaway" : "giveaways") +
                 " to enter");
@@ -76,15 +76,14 @@ public class Utils {
         System.out.println("Failed to enter giveaway for: " + giveawayTitle);
     }
 
-    public static void printScrappedGiveaways(int pageNumber, int giveawayCount) {
+    public static void printScrappedGiveaways(int pageNumber, int giveawayCount, long time) {
         System.out.print("\rScrapped " + pageNumber + (pageNumber == 1 ? " page" : " pages") + " and found " +
-                giveawayCount + (giveawayCount == 1 ? " giveaway" : " giveaways"));
+                giveawayCount + (giveawayCount == 1 ? " giveaway" : " giveaways") + " in " + time + "ms");
     }
 
     public static void printFinalSummary(int giveawayCount, int pointsSpent, int remainingPoints) {
-        System.out.println("Entered " + giveawayCount + (giveawayCount == 1 ? " giveaway" : " giveaways") +", spent " +
+        System.out.println("Entered " + giveawayCount + (giveawayCount == 1 ? " giveaway" : " giveaways") + ", spent " +
                 pointsSpent + (pointsSpent == 1 ? " point" : " points") + ", " +
                 remainingPoints + (remainingPoints == 1 ? " point" : " points") + " remaining");
     }
-
 }
