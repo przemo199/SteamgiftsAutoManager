@@ -1,7 +1,7 @@
-FROM openjdk:15-alpine AS build
+FROM openjdk:17-alpine AS build
 WORKDIR /app
 COPY . .
-RUN ["./gradlew", "build"]
+RUN ["./gradlew", "clean", "build"]
 
 FROM openjdk:17-alpine
 EXPOSE 8000
