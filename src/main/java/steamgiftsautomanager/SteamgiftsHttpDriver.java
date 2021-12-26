@@ -96,7 +96,7 @@ public class SteamgiftsHttpDriver {
                 }
             }
 
-            Utils.printScrappedGiveaways(scrappedPages.get(), giveaways.size(), System.currentTimeMillis() - startTime);
+            Utils.printScrapedGiveaways(scrappedPages.get(), giveaways.size(), System.currentTimeMillis() - startTime);
         } while (hasMorePages);
         threadPool.shutdownNow();
 

@@ -76,8 +76,8 @@ public class Utils {
         System.out.println("Failed to enter giveaway for: " + giveawayTitle);
     }
 
-    public static void printScrappedGiveaways(int pageNumber, int giveawayCount, long time) {
-        System.out.print("\rScrapped " + pageNumber + (pageNumber == 1 ? " page" : " pages") + " and found " +
+    public static void printScrapedGiveaways(int pageNumber, int giveawayCount, long time) {
+        System.out.print("\rScraped " + pageNumber + (pageNumber == 1 ? " page" : " pages") + " and found " +
                 giveawayCount + (giveawayCount == 1 ? " giveaway" : " giveaways") + " in " + time + "ms");
     }
 
