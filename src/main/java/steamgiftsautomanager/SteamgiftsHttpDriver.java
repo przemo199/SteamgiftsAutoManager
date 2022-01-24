@@ -28,7 +28,7 @@ public class SteamgiftsHttpDriver {
     private static final String NAV_POINTS_CLASS = ".nav__points";
     private static final String TABLE_ROW_INNER_WRAP_CLASS = ".table__row-inner-wrap";
     private static final String TABLE_COLUMN_SECONDARY_LINK_CLASS = ".table__column__secondary-link";
-    private static final String TABLE_IMAGE_THUMBNAIL_CLASS = ".table_image_thumbnail";
+    private static final String TABLE_COLUMN_HEADING_CLASS = ".table__column__heading";
     private static final String NOT_NUMBER_REGEX = "[^0-9]";
     private static final String[] SUCCESS_KEYWORDS = {"success", "entry_count", "points"};
     private final RequestsFileContent requestsFileContent;
@@ -156,13 +156,13 @@ public class SteamgiftsHttpDriver {
                 Elements elements = document.select(TABLE_ROW_INNER_WRAP_CLASS);
 
                 for (Element element : elements) {
-                    if (!element.select(TABLE_COLUMN_SECONDARY_LINK_CLASS).isEmpty()) {
-                        links.add(element.select(TABLE_IMAGE_THUMBNAIL_CLASS).attr("href"));
-                    } else {
+                    if (element.select(TABLE_COLUMN_SECONDARY_LINK_CLASS).isEmpty()) {
                         if (element == elements.last()) {
                             hasMore = false;
                             break;
                         }
+                    } else {
+                        links.add(element.select(TABLE_COLUMN_HEADING_CLASS).attr("href"));
                     }
                 }
 

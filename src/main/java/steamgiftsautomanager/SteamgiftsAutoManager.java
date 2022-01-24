@@ -7,7 +7,7 @@ public class SteamgiftsAutoManager {
 
     public static void main(String[] args) {
         try {
-            Instant start = Instant.now();
+            Instant startTime = Instant.now();
 
             RequestsFileContent requestsFileContent = RequestsFileReader.readRequestsFileContent();
             SteamgiftsHttpDriver steamgiftsHttpDriver = new SteamgiftsHttpDriver(requestsFileContent);
@@ -16,7 +16,7 @@ public class SteamgiftsAutoManager {
 
             steamgiftsHttpDriver.enterGiveaways(filteredGiveaways);
 
-            System.out.println("Total execution time: " + Duration.between(start, Instant.now()).toMillis() + "ms");
+            System.out.println("Total execution time: " + Duration.between(startTime, Instant.now()).toMillis() + "ms");
         } catch (Exception e) {
             e.printStackTrace();
         }
