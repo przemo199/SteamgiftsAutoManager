@@ -1,5 +1,7 @@
 package steamgiftsautomanager;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
@@ -85,5 +87,14 @@ public class Utils {
         System.out.println("Entered " + giveawayCount + (giveawayCount == 1 ? " giveaway" : " giveaways") + ", spent " +
                 pointsSpent + (pointsSpent == 1 ? " point" : " points") + ", " +
                 remainingPoints + (remainingPoints == 1 ? " point" : " points") + " remaining");
+    }
+
+    public static void printFoundRequestedTitles(int titleCount, String tagName) {
+        System.out.println("Found " + titleCount + " requested " + (titleCount == 1 ? " title" : "titles") +
+                " tagged as " + tagName);
+    }
+
+    public static void printRequestsFileParsingTime(long duration) {
+        System.out.println("Requests file parsed and sorted in: " + duration + "ms");
     }
 }
