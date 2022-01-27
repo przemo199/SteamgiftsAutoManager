@@ -53,12 +53,6 @@ public class RequestsFileReader {
             } catch (IOException e) {
                 throw new RuntimeException("Error when reading requests file");
             }
-        } else if (Files.exists(Paths.get("./requests/" + REQUESTS_FILE_NAME))) {
-            try {
-                return Files.readAllLines(Paths.get("./requests/" + REQUESTS_FILE_NAME)).toArray(new String[0]);
-            } catch (IOException e) {
-                throw new RuntimeException("Error when reading requests file");
-            }
         } else {
             throw new RuntimeException("Requests file not found");
         }
@@ -80,12 +74,7 @@ public class RequestsFileReader {
                 Files.writeString(Paths.get(REQUESTS_FILE_NAME), content);
             } catch (IOException e) {
                 e.printStackTrace();
-            }
-        } else if (Files.exists(Paths.get("./requests/" + REQUESTS_FILE_NAME))) {
-            try {
-                Files.writeString(Paths.get("./requests/" + REQUESTS_FILE_NAME), content);
-            } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println("Requests file not found");
             }
         }
     }

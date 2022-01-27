@@ -1,9 +1,9 @@
-FROM openjdk:17-alpine AS build
+FROM --platform=$BUILDPLATFORM openjdk:17-alpine AS build
 WORKDIR /app
 COPY . .
-RUN ["./gradlew", "clean", "build"]
+RUN ["./gradlew", "build"]
 
-FROM openjdk:17-alpine
+FROM --platform=$BUILDPLATFORM openjdk:17-alpine
 EXPOSE 8000
 COPY --from=build /app/build/libs/*.jar /app/steamgifts-auto-manager-http.jar
 ENTRYPOINT ["java", "-jar", "/app/steamgifts-auto-manager-http.jar"]

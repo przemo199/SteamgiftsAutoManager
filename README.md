@@ -40,5 +40,5 @@ gradlew run
 or build or download the docker image from DockerHub and use:
 
 ```bash
-docker run -d -p <host_port>:8000 -v <host_folder_with_requests_file>:/app/requests steamgifts-auto-manager-http
+docker run -d -p <host_port>:8000 -v <host_path_to_requests_file>:/requests.txt
 ```
