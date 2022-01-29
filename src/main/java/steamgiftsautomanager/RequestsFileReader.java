@@ -51,6 +51,7 @@ public class RequestsFileReader {
             try {
                 return Files.readAllLines(Paths.get(REQUESTS_FILE_NAME)).toArray(new String[0]);
             } catch (IOException e) {
+                e.printStackTrace();
                 throw new RuntimeException("Error when reading requests file");
             }
         } else {

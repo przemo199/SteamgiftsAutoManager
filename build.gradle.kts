@@ -40,7 +40,3 @@ tasks.register(name = "runTool", type = Exec::class) {
     workingDir = file(".")
     commandLine("java", "-jar", "./build/libs/steamgifts-auto-manager-http.jar")
 }
-
-tasks.register(name = "buildAndPushDockerImage", type = Exec::class) {
-    commandLine("docker buildx build --platform linux/arm64,linux/amd64,linux/riscv64 --pull -t przemo199/steamgifts-auto-manager-http:latest --push .")
-}
