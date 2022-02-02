@@ -15,7 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class SteamgiftsHttpDriver {
+public class SteamgiftsHttpClient {
     private static final String BASE_URL = "https://www.steamgifts.com/";
     private static final String SEARCH_URL = BASE_URL + "giveaways/search?page=";
     private static final String AJAX_URL = BASE_URL + "ajax.php";
@@ -39,7 +39,7 @@ public class SteamgiftsHttpDriver {
         return document.toString().contains("Sign in through STEAM");
     }
 
-    public SteamgiftsHttpDriver(RequestsFileContent requestsFileContent) {
+    public SteamgiftsHttpClient(RequestsFileContent requestsFileContent) {
         this.requestsFileContent = requestsFileContent;
         if (hasNoSession()) throw new RuntimeException("No session associated with the provided cookie found");
     }

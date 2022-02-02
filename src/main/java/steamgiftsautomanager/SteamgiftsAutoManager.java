@@ -10,11 +10,11 @@ public class SteamgiftsAutoManager {
             Instant startTime = Instant.now();
 
             RequestsFileContent requestsFileContent = RequestsFileReader.readRequestsFileContent();
-            SteamgiftsHttpDriver steamgiftsHttpDriver = new SteamgiftsHttpDriver(requestsFileContent);
-            Giveaway[] giveaways = steamgiftsHttpDriver.scrapeAvailableGiveaways();
+            SteamgiftsHttpClient steamgiftsHttpClient = new SteamgiftsHttpClient(requestsFileContent);
+            Giveaway[] giveaways = steamgiftsHttpClient.scrapeAvailableGiveaways();
             Giveaway[] filteredGiveaways = Utils.filterGiveaways(giveaways, requestsFileContent);
 
-            steamgiftsHttpDriver.enterGiveaways(filteredGiveaways);
+            steamgiftsHttpClient.enterGiveaways(filteredGiveaways);
 
             System.out.println("Total execution time: " + Duration.between(startTime, Instant.now()).toMillis() + "ms");
         } catch (Exception e) {
