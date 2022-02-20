@@ -1,10 +1,13 @@
 package steamgiftsautomanager;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public final class RequestsFileContent {
     private final String cookieName;
     private final String cookieValue;
     private final String xsrfToken;
-    private final String[] exactMatches;
+    private String[] exactMatches;
     private final String[] anyMatches;
     private final String[] noMatches;
 
@@ -39,5 +42,11 @@ public final class RequestsFileContent {
 
     public String[] getNoMatches() {
         return noMatches;
+    }
+
+    public void addExactMatches(String[] exactMatches) {
+        Set<String> titleSet = new HashSet<>(Set.of(this.exactMatches));
+        titleSet.addAll(Set.of(exactMatches));
+        this.exactMatches = titleSet.toArray(new String[0]);
     }
 }

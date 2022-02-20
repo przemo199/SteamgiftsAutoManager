@@ -59,7 +59,7 @@ public class RequestsFileReader {
         }
     }
 
-    private static void writeRequestsFileContent(RequestsFileContent requestsFileContent) {
+     private static void writeRequestsFileContent(RequestsFileContent requestsFileContent) {
         String newLine = System.lineSeparator();
         String content = requestsFileContent.getCookieName() + "=" + requestsFileContent.getCookieValue() + newLine +
                 (requestsFileContent.getXsrfToken() + newLine +
@@ -135,5 +135,12 @@ public class RequestsFileReader {
         writeRequestsFileContent(requestsFileContent);
         Utils.printRequestsFileParsingTime(Duration.between(start, Instant.now()).toMillis());
         return requestsFileContent;
+    }
+
+    public static void updateRequestsFileContent(RequestsFileContent requestsFileContent, String[] titles) {
+        Instant start = Instant.now();
+        requestsFileContent.addExactMatches(titles);
+        writeRequestsFileContent(requestsFileContent);
+        System.out.println("Updated requested titles in " + Duration.between(start, Instant.now()).toMillis() / 1000.0 + "s");
     }
 }

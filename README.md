@@ -30,7 +30,7 @@ The first two lines must contain ```cookie``` from your steamgifts.com session a
 
 To obtain these values open the browser and go to any giveaway on steamgifts.com that you can enter, open the developer tools and go to the ```Network``` tab, make sure that developer tools are recording network activity and click on ```Enter Giveaway``` or ```Remove Entry``` button, you should see a new request called ```ajax.php```, click on its name and scroll to the very bottom of the ```Headers```  tab, you will find the value of ```cookie``` in the ```Request Headers``` section and the value of ```xsrf_token``` in the ```Form Data``` section.  
 
-The rest of the file should contain desired titles that can be divided into three groups denoted by tags `````[exact_match]````` to enter giveaway if its title matches entirely one of the provided game titles and ```[any_match]``` to enter giveaway if its title contains any of the provided names, additionally none of the giveaways with titles listed below the tag ```[no_match]``` will be entered, title matching in this case is similar to ```[exact_match]``` tag, enter one game title per line and at least one of the ```[exact_match]``` or ```[any_match]``` tags before you launch the tool.
+The rest of the file should contain desired titles that can be divided into three groups denoted by tags ```[exact_match]``` to enter giveaway if its title matches entirely one of the provided game titles and ```[any_match]``` to enter giveaway if its title contains any of the provided names, additionally none of the giveaways with titles listed below the tag ```[no_match]``` will be entered, title matching in this case is similar to ```[exact_match]``` tag, enter one game title per line and at least one of the ```[exact_match]``` or ```[any_match]``` tags before you launch the tool.
 
 To start the tool use:  
 
@@ -42,3 +42,5 @@ or build or download the docker image from DockerHub and use:
 ```bash
 docker run -d -p <host_port>:8000 -v <host_path_to_requests_file>:/requests.txt
 ```
+
+To automatically update the list of the requested titles under the ```[exact_match]``` tag add ```update-titles``` argument when executing the tool.

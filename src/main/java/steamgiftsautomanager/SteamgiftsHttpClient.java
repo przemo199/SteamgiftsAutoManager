@@ -5,10 +5,10 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -16,10 +16,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SteamgiftsHttpClient {
-    private static final String BASE_URL = "https://www.steamgifts.com/";
-    private static final String SEARCH_URL = BASE_URL + "giveaways/search?page=";
-    private static final String AJAX_URL = BASE_URL + "ajax.php";
-    private static final String ENTERED_GIVEAWAYS_SEARCH_URL = BASE_URL + "/giveaways/entered/search?page=";
+    private static final String BASE_URL = "https://www.steamgifts.com";
+    private static final String GIVEAWAY_SEARCH_URL = BASE_URL + "/giveaways/search?page=";
+    private static final String AJAX_REQUEST_URL = BASE_URL + "/ajax.php";
+    private static final String ENTERED_GIVEAWAYS_URL = BASE_URL + "/giveaways/entered";
+    private static final String ENTERED_GIVEAWAYS_SEARCH_URL = ENTERED_GIVEAWAYS_URL + "/search?page=";
     private static final String INNER_GIVEAWAY_WRAP_CLASS = ".giveaway__row-inner-wrap";
     private static final String GIVEAWAY_HEADING_NAME_CLASS = ".giveaway__heading__name";
     private static final String GIVEAWAY_THUMBNAIL_CLASS = ".giveaway_image_thumbnail";
@@ -50,7 +51,7 @@ public class SteamgiftsHttpClient {
         AtomicInteger scrappedPages = new AtomicInteger(0);
         boolean hasMorePages = true;
         int requestBatch = 10;
-        long startTime = System.currentTimeMillis();
+        Instant startTime = Instant.now();
 
         ExecutorService threadPool = Executors.newCachedThreadPool();
         List<CompletableFuture<Giveaway[]>> futures = new ArrayList<>();
@@ -58,7 +59,7 @@ public class SteamgiftsHttpClient {
             for (int i = 0; i < requestBatch; i++) {
                 int page = pageNumber;
                 futures.add(CompletableFuture.supplyAsync(() -> {
-                    Document document = getDocumentFromUrl(SEARCH_URL + page);
+                    Document document = getDocumentFromUrl(GIVEAWAY_SEARCH_URL + page);
 
                     if (document == null || document.toString().contains("No results were found.")) {
                         return null;
@@ -96,7 +97,7 @@ public class SteamgiftsHttpClient {
                 }
             }
 
-            Utils.printScrapedGiveaways(scrappedPages.get(), giveaways.size(), System.currentTimeMillis() - startTime);
+            Utils.printScrapedGiveaways(scrappedPages.get(), giveaways.size(), Duration.between(startTime, Instant.now()).toMillis());
         } while (hasMorePages);
         threadPool.shutdownNow();
 
@@ -111,8 +112,9 @@ public class SteamgiftsHttpClient {
         String title = nameElement.text();
 
         String relativeUrl;
-        if (element.select(GIVEAWAY_THUMBNAIL_CLASS).hasAttr("href")) {
-            relativeUrl = element.select(GIVEAWAY_THUMBNAIL_CLASS).attr("href");
+        Elements elements = element.select(GIVEAWAY_THUMBNAIL_CLASS);
+        if (elements.hasAttr("href")) {
+            relativeUrl = elements.attr("href");
         } else {
             relativeUrl = element.select(GIVEAWAY_THUMBNAIL_MISSING_CLASS).attr("href");
         }
@@ -132,7 +134,7 @@ public class SteamgiftsHttpClient {
         try {
             document = Jsoup.connect(url).cookie(requestsFileContent.getCookieName(),
                     requestsFileContent.getCookieValue()).get();
-        } catch (Exception exception) {
+        } catch (IOException exception) {
             exception.printStackTrace();
         }
 
@@ -145,7 +147,7 @@ public class SteamgiftsHttpClient {
         return Integer.parseInt(document.select(NAV_POINTS_CLASS).text());
     }
 
-    private String[] getLinksToEnteredGiveaways() {
+    private String[] scrapeLinksToEnteredGiveaways() {
         List<String> links = new ArrayList<>();
         int pageNumber = 1;
         boolean hasMore = true;
@@ -180,7 +182,7 @@ public class SteamgiftsHttpClient {
             String body = "xsrf_token=" + requestsFileContent.getXsrfToken() + "&do=entry_insert&code=" +
                     giveaway.getGiveawayCode();
 
-            Document document = Jsoup.connect(AJAX_URL).referrer(BASE_URL + giveaway.getRelativeUrl())
+            Document document = Jsoup.connect(AJAX_REQUEST_URL).referrer(BASE_URL + giveaway.getRelativeUrl())
                     .cookie(requestsFileContent.getCookieName(), requestsFileContent.getCookieValue())
                     .requestBody(body).ignoreContentType(true).post();
 
@@ -200,7 +202,7 @@ public class SteamgiftsHttpClient {
     }
 
     public void enterGiveaways(Giveaway[] giveaways) {
-        List<String> linksToEnteredGiveaways = Arrays.asList(getLinksToEnteredGiveaways());
+        List<String> linksToEnteredGiveaways = Arrays.asList(scrapeLinksToEnteredGiveaways());
         List<Giveaway> notEnteredGiveaways = new ArrayList<>();
 
         Utils.printFoundEnteredGiveaways(linksToEnteredGiveaways.size());
@@ -245,5 +247,49 @@ public class SteamgiftsHttpClient {
         Utils.printFinalSummary(enteredGiveaways, pointsSpent, getRemainingPoints());
 
         threadPool.shutdownNow();
+    }
+
+    public String[] scrapeTitlesOfAllEnteredGiveaways() {
+        Set<String> titles = new HashSet<>();
+        Document document = getDocumentFromUrl(ENTERED_GIVEAWAYS_URL);
+
+        if (document == null) return new String[]{};
+
+        Element lastDataPageNumberElement = document.select("[data-page-number]").last();
+
+        if (lastDataPageNumberElement == null) return new String[]{};
+
+        int pageCount = Integer.parseInt(lastDataPageNumberElement.attr("data-page-number"));
+        ExecutorService threadPool = Executors.newCachedThreadPool();
+        List<CompletableFuture<String[]>> futures = new ArrayList<>();
+        for (int i = 1; i <= pageCount; i++) {
+            int finalI = i;
+            futures.add(CompletableFuture.supplyAsync(() -> {
+                Document searchDocument = getDocumentFromUrl(ENTERED_GIVEAWAYS_SEARCH_URL + finalI);
+                if (searchDocument == null) return new String[]{};
+                Elements elements = searchDocument.select(TABLE_COLUMN_HEADING_CLASS);
+                List<String> giveawayTitles = new ArrayList<>();
+                for (Element element : elements) {
+                    giveawayTitles.add(element.text());
+                }
+                return giveawayTitles.toArray(new String[0]);
+            }, threadPool));
+        }
+
+        for (CompletableFuture<String[]> future : futures) {
+            try {
+                String[] titlesOnPage = future.get();
+                for (int i = 0; i < titlesOnPage.length; i++) {
+                    titlesOnPage[i] = titlesOnPage[i].replaceAll(" \\(\\d+ Copies\\)", "");
+                }
+                Collections.addAll(titles, titlesOnPage);
+            } catch (ExecutionException | InterruptedException exception) {
+                exception.printStackTrace();
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        threadPool.shutdownNow();
+        return titles.toArray(new String[0]);
     }
 }

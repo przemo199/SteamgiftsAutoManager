@@ -6,7 +6,7 @@ import java.time.Instant;
 public class SteamgiftsAutoManager {
 
     public static void main(String[] args) {
-        try {
+        if (args.length == 0) {
             Instant startTime = Instant.now();
 
             RequestsFileContent requestsFileContent = RequestsFileReader.readRequestsFileContent();
@@ -16,9 +16,18 @@ public class SteamgiftsAutoManager {
 
             steamgiftsHttpClient.enterGiveaways(filteredGiveaways);
 
-            System.out.println("Total execution time: " + Duration.between(startTime, Instant.now()).toMillis() + "ms");
-        } catch (Exception e) {
-            e.printStackTrace();
+            Utils.printTotalParsingTime(Duration.between(startTime, Instant.now()).toMillis());
+        }
+
+        if (args.length == 1 && args[0].strip().equals("update-titles")) {
+            Instant startTime = Instant.now();
+
+            RequestsFileContent requestsFileContent = RequestsFileReader.readRequestsFileContent();
+            SteamgiftsHttpClient steamgiftsHttpClient = new SteamgiftsHttpClient(requestsFileContent);
+            String[] allEnteredGiveaways = steamgiftsHttpClient.scrapeTitlesOfAllEnteredGiveaways();
+            RequestsFileReader.updateRequestsFileContent(requestsFileContent, allEnteredGiveaways);
+
+            Utils.printTotalParsingTime(Duration.between(startTime, Instant.now()).toMillis());
         }
     }
 }

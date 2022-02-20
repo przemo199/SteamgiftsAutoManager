@@ -1,5 +1,7 @@
 package steamgiftsautomanager;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
@@ -76,9 +78,9 @@ public class Utils {
         System.out.println("Failed to enter giveaway for: " + giveawayTitle);
     }
 
-    public static void printScrapedGiveaways(int pageNumber, int giveawayCount, long time) {
+    public static void printScrapedGiveaways(int pageNumber, int giveawayCount, long duration) {
         System.out.print("\rScraped " + pageNumber + (pageNumber == 1 ? " page" : " pages") + " and found " +
-                giveawayCount + (giveawayCount == 1 ? " giveaway" : " giveaways") + " in " + time + "ms");
+                giveawayCount + (giveawayCount == 1 ? " giveaway" : " giveaways") + " in " + duration / 1000.0 + "s");
     }
 
     public static void printFinalSummary(int giveawayCount, int pointsSpent, int remainingPoints) {
@@ -93,6 +95,10 @@ public class Utils {
     }
 
     public static void printRequestsFileParsingTime(long duration) {
-        System.out.println("Requests file parsed and sorted in: " + duration + "ms");
+        System.out.println("Requests file parsed and sorted in " + duration / 1000.0 + "s");
+    }
+
+    public static void printTotalParsingTime(long duration) {
+        System.out.println("Total execution time: " + duration / 1000.0 + "s");
     }
 }
