@@ -13,6 +13,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class SteamgiftsHttpClient {
     private static final String BASE_URL = "https://www.steamgifts.com";
@@ -48,61 +49,50 @@ public class SteamgiftsHttpClient {
         Map<String, Giveaway> giveaways = new HashMap<>();
         int pageNumber = 1;
         AtomicInteger scrappedPages = new AtomicInteger(0);
-        boolean hasMorePages = true;
-        int requestBatch = 10;
+        Stream<Boolean> hasMorePages;
+        int requestBatchSize = 10;
         Instant startTime = Instant.now();
 
-        ExecutorService threadPool = Executors.newVirtualThreadPerTaskExecutor();
-        List<CompletableFuture<Giveaway[]>> futures = new ArrayList<>();
-        do {
-            for (int i = 0; i < requestBatch; i++) {
-                int page = pageNumber;
-                futures.add(CompletableFuture.supplyAsync(() -> {
-                    Document document = getDocumentFromUrl(GIVEAWAY_SEARCH_URL + page);
+        try (var threadPool = Executors.newVirtualThreadPerTaskExecutor()) {
+            List<CompletableFuture<Giveaway[]>> futures = new ArrayList<>();
+            do {
+                hasMorePages = IntStream.range(pageNumber, pageNumber + requestBatchSize).mapToObj(index -> threadPool.submit(() -> {
+                    var document = getDocumentFromUrl(GIVEAWAY_SEARCH_URL + index);
 
                     if (document == null || document.toString().contains("No results were found.")) {
                         return null;
                     }
 
-                    Elements gameElements = document.select(INNER_GIVEAWAY_WRAP_CLASS);
-                    ArrayList<Giveaway> giveawayList = new ArrayList<>();
-                    for (Element element : gameElements) {
-                        Giveaway giveaway = getGiveawayFromElement(element);
-                        if (giveaway != null) {
-                            giveawayList.add(giveaway);
-                        }
-                    }
+                    var gameElements = document.select(INNER_GIVEAWAY_WRAP_CLASS);
 
                     scrappedPages.getAndIncrement();
 
-                    return giveawayList.toArray(new Giveaway[0]);
-                }, threadPool));
-                pageNumber++;
-            }
-
-            for (CompletableFuture<Giveaway[]> future : futures) {
-                try {
-                    Giveaway[] giveawayList = future.get();
-                    if (giveawayList == null) {
-                        hasMorePages = false;
-                    } else {
-                        for (Giveaway giveaway : giveawayList) {
-                            giveaways.put(giveaway.getRelativeUrl(), giveaway);
+                    return gameElements.stream().map(this::getGiveawayFromElement).filter(Objects::nonNull).toList().toArray(Giveaway[]::new);
+                })).map(giveawayFuture -> {
+                    try {
+                        Giveaway[] giveawayList = giveawayFuture.get();
+                        if (giveawayList == null) {
+                            return false;
+                        } else {
+                            for (Giveaway giveaway : giveawayList) {
+                                giveaways.put(giveaway.getRelativeUrl(), giveaway);
+                            }
                         }
+                    } catch (ExecutionException | InterruptedException e) {
+                        e.printStackTrace();
+                        Thread.currentThread().interrupt();
                     }
-                } catch (ExecutionException | InterruptedException e) {
-                    e.printStackTrace();
-                    Thread.currentThread().interrupt();
-                }
-            }
+                    return true;
+                });
+                pageNumber += requestBatchSize;
 
-            Utils.printScrapedGiveaways(scrappedPages.get(), giveaways.size(), Duration.between(startTime, Instant.now()).toMillis());
-        } while (hasMorePages);
-        threadPool.shutdownNow();
+                Utils.printScrapedGiveaways(scrappedPages.get(), giveaways.size(), Duration.between(startTime, Instant.now()).toMillis());
+            } while (hasMorePages.allMatch(x -> x));
 
-        System.out.println();
+            System.out.println();
 
-        return giveaways.values().toArray(new Giveaway[0]);
+            return giveaways.values().toArray(Giveaway[]::new);
+        }
     }
 
     private Giveaway getGiveawayFromElement(Element element) {
@@ -141,7 +131,7 @@ public class SteamgiftsHttpClient {
     }
 
     private int getRemainingPoints() {
-        Document document = getDocumentFromUrl(BASE_URL);
+        var document = getDocumentFromUrl(BASE_URL);
         if (document == null) return 0;
         return Integer.parseInt(document.select(NAV_POINTS_CLASS).text());
     }
@@ -152,11 +142,11 @@ public class SteamgiftsHttpClient {
         boolean hasMore = true;
 
         do {
-            Document document = getDocumentFromUrl(ENTERED_GIVEAWAYS_SEARCH_URL + pageNumber);
+            var document = getDocumentFromUrl(ENTERED_GIVEAWAYS_SEARCH_URL + pageNumber);
             if (document != null) {
-                Elements elements = document.select(TABLE_ROW_INNER_WRAP_CLASS);
+                var elements = document.select(TABLE_ROW_INNER_WRAP_CLASS);
 
-                for (Element element : elements) {
+                for (var element : elements) {
                     if (element.select(TABLE_COLUMN_SECONDARY_LINK_CLASS).isEmpty()) {
                         if (element == elements.last()) {
                             hasMore = false;
@@ -200,7 +190,7 @@ public class SteamgiftsHttpClient {
         }
     }
 
-    public void enterGiveaways(Giveaway[] giveaways) {
+    public void enterGiveaways(final Giveaway[] giveaways) {
         List<String> linksToEnteredGiveaways = Arrays.asList(scrapeLinksToEnteredGiveaways());
         List<Giveaway> notEnteredGiveaways = new ArrayList<>();
 
@@ -214,10 +204,9 @@ public class SteamgiftsHttpClient {
 
         Utils.printFoundGiveawayCandidates(notEnteredGiveaways.size());
 
-        ExecutorService threadPool = Executors.newCachedThreadPool();
-        List<CompletableFuture<Giveaway>> futures = new ArrayList<>();
-        for (Giveaway giveaway : notEnteredGiveaways) {
-            futures.add(CompletableFuture.supplyAsync(() -> {
+        try (var threadPool = Executors.newVirtualThreadPerTaskExecutor()) {
+            List<CompletableFuture<Giveaway>> futures = new ArrayList<>();
+            var giveawayList = notEnteredGiveaways.stream().map(giveaway -> threadPool.submit(() -> {
                 if (enterGiveaway(giveaway)) {
                     Utils.printEnteredGiveaway(giveaway.getTitle());
                     return giveaway;
@@ -225,36 +214,26 @@ public class SteamgiftsHttpClient {
                     Utils.printFailedToEnterGiveaway(giveaway.getTitle());
                     return null;
                 }
-            }, threadPool));
-        }
-
-        int pointsSpent = 0;
-        int enteredGiveaways = 0;
-        for (CompletableFuture<Giveaway> future : futures) {
-            try {
-                Giveaway giveaway = future.get();
-                if (giveaway != null) {
-                    pointsSpent += giveaway.getPointCost();
-                    enteredGiveaways++;
+            })).map(future -> {
+                try {
+                    return future.get();
+                }  catch (ExecutionException | InterruptedException e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (ExecutionException | InterruptedException exception) {
-                exception.printStackTrace();
-                Thread.currentThread().interrupt();
-            }
+            }).filter(Objects::nonNull).toList();
+            int enteredGiveaways = giveawayList.size();
+            int pointsSpent = giveawayList.stream().map(Giveaway::getPointCost).reduce(0, Integer::sum);
+
+            Utils.printFinalSummary(enteredGiveaways, pointsSpent, getRemainingPoints());
         }
-
-        Utils.printFinalSummary(enteredGiveaways, pointsSpent, getRemainingPoints());
-
-        threadPool.shutdownNow();
     }
 
     public String[] scrapeTitlesOfAllEnteredGiveaways() {
-//        Set<String> titles = new HashSet<>();
-        Document document = getDocumentFromUrl(ENTERED_GIVEAWAYS_URL);
+        var document = getDocumentFromUrl(ENTERED_GIVEAWAYS_URL);
 
         if (document == null) return new String[]{};
 
-        Element lastDataPageNumberElement = document.select("[data-page-number]").last();
+        var lastDataPageNumberElement = document.select("[data-page-number]").last();
 
         if (lastDataPageNumberElement == null) return new String[]{};
 
