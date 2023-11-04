@@ -15,7 +15,7 @@ class RequestsReaderTest {
 
     static Method getPublicIsValidCookie() {
         try {
-            Class<?> utils = RequestsFileReader.class;
+            Class<?> utils = RequestsFileIO.class;
             Method customFilter = utils.getDeclaredMethod("isValidCookie", String.class);
             customFilter.setAccessible(true);
             return customFilter;
@@ -27,8 +27,8 @@ class RequestsReaderTest {
 
     static Method getPublicGetSortedAndUniqueTitlesByTag() {
         try {
-            Class<?> utils = RequestsFileReader.class;
-            Method getTitlesByTag = utils.getDeclaredMethod("getSortedAndUniqueTitlesByTag", Tag.class, List.class);
+            Class<?> utils = RequestsFileIO.class;
+            Method getTitlesByTag = utils.getDeclaredMethod("getSortedAndUniqueTitlesByTag", MatchTag.class, List.class);
             getTitlesByTag.setAccessible(true);
             return getTitlesByTag;
         } catch (Exception e) {
@@ -65,19 +65,19 @@ class RequestsReaderTest {
         String anyMatchTest = "anyMatchTest";
         String noMatchTest = "noMatchTest";
         String[] content = new String[]{
-                Tag.EXACT_MATCH.toString(),
+                MatchTag.EXACT_MATCH.toString(),
                 exactMatchTest,
-                Tag.ANY_MATCH.toString(),
+                MatchTag.ANY_MATCH.toString(),
                 anyMatchTest,
-                Tag.NO_MATCH.toString(),
+                MatchTag.NO_MATCH.toString(),
                 noMatchTest
         };
         List<String> contentList = Arrays.asList(content);
 
         try {
-            assertArrayEquals((String[]) getSortedAndUniqueTitlesByTag.invoke(null, Tag.EXACT_MATCH, contentList), new String[]{exactMatchTest});
-            assertArrayEquals((String[]) getSortedAndUniqueTitlesByTag.invoke(null, Tag.ANY_MATCH, contentList), new String[]{anyMatchTest});
-            assertArrayEquals((String[]) getSortedAndUniqueTitlesByTag.invoke(null, Tag.NO_MATCH, contentList), new String[]{noMatchTest});
+            assertArrayEquals((String[]) getSortedAndUniqueTitlesByTag.invoke(null, MatchTag.EXACT_MATCH, contentList), new String[]{exactMatchTest});
+            assertArrayEquals((String[]) getSortedAndUniqueTitlesByTag.invoke(null, MatchTag.ANY_MATCH, contentList), new String[]{anyMatchTest});
+            assertArrayEquals((String[]) getSortedAndUniqueTitlesByTag.invoke(null, MatchTag.NO_MATCH, contentList), new String[]{noMatchTest});
         } catch (Exception e) {
             e.printStackTrace();
             fail();
@@ -86,15 +86,15 @@ class RequestsReaderTest {
 
     @Test
     void tagTest() {
-        assertTrue(Tag.contains("[exact_match]"));
-        assertTrue(Tag.contains("[any_match]"));
-        assertTrue(Tag.contains("[no_match]"));
-        assertFalse(Tag.contains(null));
-        assertFalse(Tag.contains(""));
-        assertFalse(Tag.contains("match"));
-        assertFalse(Tag.contains("[]"));
-        assertEquals("[exact_match]", Tag.EXACT_MATCH.toString());
-        assertEquals("[any_match]", Tag.ANY_MATCH.toString());
-        assertEquals("[no_match]", Tag.NO_MATCH.toString());
+        assertTrue(MatchTag.contains("[exact_match]"));
+        assertTrue(MatchTag.contains("[any_match]"));
+        assertTrue(MatchTag.contains("[no_match]"));
+        assertFalse(MatchTag.contains(null));
+        assertFalse(MatchTag.contains(""));
+        assertFalse(MatchTag.contains("match"));
+        assertFalse(MatchTag.contains("[]"));
+        assertEquals("[exact_match]", MatchTag.EXACT_MATCH.toString());
+        assertEquals("[any_match]", MatchTag.ANY_MATCH.toString());
+        assertEquals("[no_match]", MatchTag.NO_MATCH.toString());
     }
 }

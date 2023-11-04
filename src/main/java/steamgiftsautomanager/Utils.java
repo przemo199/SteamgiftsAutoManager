@@ -1,7 +1,5 @@
 package steamgiftsautomanager;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
@@ -10,7 +8,7 @@ public class Utils {
     private Utils() {
     }
 
-    private static boolean customFilter(String giveawayTitle, RequestsFileContent requestsFileContent) {
+    private static boolean customFilter(final String giveawayTitle, final RequestsFileContent requestsFileContent) {
         String lowercaseTitle = giveawayTitle.toLowerCase();
 
         if (lowercaseTitle.endsWith("...")) {

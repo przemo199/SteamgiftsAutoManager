@@ -7,12 +7,12 @@ public class SteamgiftsAutoManager {
 
     public static void main(String[] args) {
         if (args.length == 0) {
-            Instant startTime = Instant.now();
+            var startTime = Instant.now();
 
-            RequestsFileContent requestsFileContent = RequestsFileReader.readRequestsFileContent();
-            SteamgiftsHttpClient steamgiftsHttpClient = new SteamgiftsHttpClient(requestsFileContent);
-            Giveaway[] giveaways = steamgiftsHttpClient.scrapeAvailableGiveaways();
-            Giveaway[] filteredGiveaways = Utils.filterGiveaways(giveaways, requestsFileContent);
+            var requestsFileContent = RequestsFileIO.readRequestsFileContent();
+            var steamgiftsHttpClient = new SteamgiftsHttpClient(requestsFileContent);
+            var giveaways = steamgiftsHttpClient.scrapeAvailableGiveaways();
+            var filteredGiveaways = Utils.filterGiveaways(giveaways, requestsFileContent);
 
             steamgiftsHttpClient.enterGiveaways(filteredGiveaways);
 
@@ -20,12 +20,12 @@ public class SteamgiftsAutoManager {
         }
 
         if (args.length == 1 && args[0].strip().equals("update-titles")) {
-            Instant startTime = Instant.now();
+            var startTime = Instant.now();
 
-            RequestsFileContent requestsFileContent = RequestsFileReader.readRequestsFileContent();
-            SteamgiftsHttpClient steamgiftsHttpClient = new SteamgiftsHttpClient(requestsFileContent);
-            String[] allEnteredGiveaways = steamgiftsHttpClient.scrapeTitlesOfAllEnteredGiveaways();
-            RequestsFileReader.updateRequestsFileContent(requestsFileContent, allEnteredGiveaways);
+            var requestsFileContent = RequestsFileIO.readRequestsFileContent();
+            var steamgiftsHttpClient = new SteamgiftsHttpClient(requestsFileContent);
+            var allEnteredGiveaways = steamgiftsHttpClient.scrapeTitlesOfAllEnteredGiveaways();
+            RequestsFileIO.updateRequestsFileContent(requestsFileContent, allEnteredGiveaways);
 
             Utils.printTotalParsingTime(Duration.between(startTime, Instant.now()).toMillis());
         }

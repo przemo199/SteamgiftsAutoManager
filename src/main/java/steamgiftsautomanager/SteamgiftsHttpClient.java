@@ -9,11 +9,10 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class SteamgiftsHttpClient {
     private static final String BASE_URL = "https://www.steamgifts.com";
@@ -35,7 +34,7 @@ public class SteamgiftsHttpClient {
     private final RequestsFileContent requestsFileContent;
 
     private boolean hasNoSession() {
-        Document document = getDocumentFromUrl(BASE_URL);
+        var document = getDocumentFromUrl(BASE_URL);
         if (document == null) return false;
         return document.toString().contains("Sign in through STEAM");
     }
@@ -46,14 +45,14 @@ public class SteamgiftsHttpClient {
     }
 
     public Giveaway[] scrapeAvailableGiveaways() {
-        HashMap<String, Giveaway> giveaways = new HashMap<>();
+        Map<String, Giveaway> giveaways = new HashMap<>();
         int pageNumber = 1;
         AtomicInteger scrappedPages = new AtomicInteger(0);
         boolean hasMorePages = true;
         int requestBatch = 10;
         Instant startTime = Instant.now();
 
-        ExecutorService threadPool = Executors.newCachedThreadPool();
+        ExecutorService threadPool = Executors.newVirtualThreadPerTaskExecutor();
         List<CompletableFuture<Giveaway[]>> futures = new ArrayList<>();
         do {
             for (int i = 0; i < requestBatch; i++) {
@@ -174,7 +173,7 @@ public class SteamgiftsHttpClient {
             }
         } while (hasMore);
 
-        return links.toArray(new String[0]);
+        return links.toArray(String[]::new);
     }
 
     private boolean enterGiveaway(Giveaway giveaway) {
@@ -250,7 +249,7 @@ public class SteamgiftsHttpClient {
     }
 
     public String[] scrapeTitlesOfAllEnteredGiveaways() {
-        Set<String> titles = new HashSet<>();
+//        Set<String> titles = new HashSet<>();
         Document document = getDocumentFromUrl(ENTERED_GIVEAWAYS_URL);
 
         if (document == null) return new String[]{};
@@ -260,36 +259,28 @@ public class SteamgiftsHttpClient {
         if (lastDataPageNumberElement == null) return new String[]{};
 
         int pageCount = Integer.parseInt(lastDataPageNumberElement.attr("data-page-number"));
-        ExecutorService threadPool = Executors.newCachedThreadPool();
-        List<CompletableFuture<String[]>> futures = new ArrayList<>();
-        for (int i = 1; i <= pageCount; i++) {
-            int finalI = i;
-            futures.add(CompletableFuture.supplyAsync(() -> {
-                Document searchDocument = getDocumentFromUrl(ENTERED_GIVEAWAYS_SEARCH_URL + finalI);
+        try (var threadPool = Executors.newVirtualThreadPerTaskExecutor()) {
+            return IntStream.range(1, pageCount).mapToObj(index -> threadPool.submit(() -> {
+                Document searchDocument = getDocumentFromUrl(ENTERED_GIVEAWAYS_SEARCH_URL + index);
                 if (searchDocument == null) return new String[]{};
-                Elements elements = searchDocument.select(TABLE_COLUMN_HEADING_CLASS);
+                var elements = searchDocument.select(TABLE_COLUMN_HEADING_CLASS);
                 List<String> giveawayTitles = new ArrayList<>();
-                for (Element element : elements) {
+                for (var element : elements) {
                     giveawayTitles.add(element.text());
                 }
-                return giveawayTitles.toArray(new String[0]);
-            }, threadPool));
-        }
-
-        for (CompletableFuture<String[]> future : futures) {
-            try {
-                String[] titlesOnPage = future.get();
-                for (int i = 0; i < titlesOnPage.length; i++) {
-                    titlesOnPage[i] = titlesOnPage[i].replaceAll(" \\(\\d+ Copies\\)", "");
+                return giveawayTitles.toArray(String[]::new);
+            })).map(future -> {
+                try {
+                    var titlesOnPage = future.get();
+                    return Arrays.stream(titlesOnPage)
+                            .map(titles -> titles.replaceAll(" \\(\\d+ Copies\\)", ""))
+                            .collect(Collectors.toSet());
+                } catch (ExecutionException | InterruptedException e) {
+                    e.printStackTrace();
+                    Thread.currentThread().interrupt();
                 }
-                Collections.addAll(titles, titlesOnPage);
-            } catch (ExecutionException | InterruptedException exception) {
-                exception.printStackTrace();
-                Thread.currentThread().interrupt();
-            }
+                return new HashSet<String>();
+            }).flatMap(Collection::stream).distinct().toArray(String[]::new);
         }
-
-        threadPool.shutdownNow();
-        return titles.toArray(new String[0]);
     }
 }
